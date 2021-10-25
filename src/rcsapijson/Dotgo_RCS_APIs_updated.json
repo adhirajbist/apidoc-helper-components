@@ -1,0 +1,2461 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Dotgo RCS APIs",
+    "version": "1.0",
+    "description": "Dotgo RCS APIs platform provides GSMA Chatbot MaaP APIs as per GSMA MaaP Chatbot API specifications, to extend any bot’s services to multiple MaaP platforms with ease. Register a bot on the RCS-APIs Platform and send messages to a phone on any supported network via the RCS-APIs Platform.RCS APIs are REST-style HTTP APIs and, receive and return JSON data. A JSON request is sent to an HTTP API endpoint.\n    \n The Chatbot needs to register its webhook with the RCS APIs platform. The webhook should be secured with HTTPS. User messages, responses, and status notifications will be posted on the webhook."
+  },
+  "servers": [
+    {
+      "url": "https://api.dotgo.com/rcs"
+    }
+  ],
+  "paths": {
+    "/auth/oauth/token": {
+      "post": {
+        "servers": [
+          {
+            "url": "https://auth.dotgo.com",
+            "description": "access token endpoint"
+          }
+        ],
+        "tags": [
+          "Get Access Token"
+        ],
+        "summary": "Get access token required for RCS-API calls",
+        "description": "The APIs are secured by the Dotgo Auth2 SSO service. To access GSMA APIs of the RCS APIs platform, an access token with Chatbot-message scope needs to be provided. To get the token, the clientId and client_secret should be sent in the Authorization header as Basic authentication (base64 encoded).\n\n  Authorize-> BasicAuth, provide credentials:\n\n```\n  Username:client_id\n  Password:client_secret\n```",
+        "operationId": "getToken",
+        "security": [
+          {
+            "BasicAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "grant_type",
+            "schema": {
+              "type": "string",
+              "default": "client_credentials",
+              "readOnly": true
+            },
+            "description": "supported grant_type - cleint_credentials"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "access_token": {
+                      "type": "string",
+                      "description": "Access token from SSO"
+                    },
+                    "token_type": {
+                      "type": "string",
+                      "enum": [
+                        "bearer"
+                      ],
+                      "description": "type of the token"
+                    },
+                    "expires_in": {
+                      "type": "integer",
+                      "description": "token expiry in seconds"
+                    },
+                    "scope": {
+                      "type": "string",
+                      "description": "scopes of the access token"
+                    }
+                  }
+                },
+                "example": {
+                  "access_token": "13ab1899-c334-47a6-8a82-8d1118f3ac85",
+                  "token_type": "bearer",
+                  "expires_in": 299,
+                  "scope": "Chatbot-message rcs-config"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "This is a bad request with invalid input, invalid object, etc."
+          },
+          "401": {
+            "description": "This request is unauthorized."
+          },
+          "5XX": {
+            "description": "Server error."
+          }
+        }
+      }
+    },
+    "/bot/v1/{botId}/messages": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/botIdParam"
+        }
+      ],
+      "post": {
+        "operationId": "sendMessage",
+        "summary": "This is the API used to send messages and isTyping indications to users.",
+        "description": "Dotgo RCS API supports various types of message that can be sent to users, including text message, file, audio message, geolocation push, rich card, and suggested chip list. The developer shall always request delivery report and display report for messages sent to users. The developer shall update the message status via the webook callback provided by the Chatbot.  \n\n```http\ncurl -X POST -H \"Authorization: Bearer ACCESS_TOKEN\" -H \"Content-Type: application/json\" https://api.dotgo.com/rcs/bot/v1/309JF3JSIJFEISIFJOE/messages\n```",
+        "tags": [
+          "Send Messages"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RCSMessageWithContactInfo"
+              },
+              "example": {
+                "RCSMessage": {
+                  "textMessage": "hello world"
+                },
+                "messageContact": {
+                  "userContact": "+14251234567"
+                }
+              }
+            }
+          },
+          "description": "One and only one textMessage, fileMessage, audioMessage, geolocationPushMessage, or richcardMessage can be used if sending messages to users. One and only one suggestedChipList can be used together with the message being sent. The developer shall provide userContact to send messages. The developer or chatbot can send isTyping indication to users by setting isTyping to 'active', and it shall continue setting isTyping to 'active' every 15 seconds otherwise  the Chatbot Platform would  dismiss the isTyping indication to users. The Chatbot can also dismiss the isTyping indication earlier by setting isTyping to 'idle'.\n\n**Examples:** \n\n***1. Send text message***\n```json \n{\n  \"RCSMessage\": {\n    \"textMessage\": \"hello world\"\n  },\n  \"messageContact\": {\n    \"userContact\": \"+14251234567\"\n  }\n}\n```\n***2. Send simple file message***\n```json \n{\n  \"RCSMessage\": {\n  \"fileMessage\": {\n      \"fileUrl\" : \"https://konnect.kirusa.com/uploads/rcsTemplates/InstaVoice.png\"\n      }\n  },\n  \"messageContact\": {\n      \"userContact\": \"+14251234567\"\n  }\n}\n```\n***3. Send file message with chiplist***\n```json \n{\n    \"RCSMessage\": {\n        \"fileMessage\": {\n            \"fileUrl\" : \"https://storage.googleapis.com/kitchen-sink-sample-images/elephant.jpg\"\n        },\n        \"suggestedChipList\": {\n            \"suggestions\": [\n            {\n                \"reply\": {\n                    \"displayText\": \"suggestion#1\",\n                    \"postback\": {\n                    \"data\": \"set_by_chatbot_reply_1\"\n                    }\n                }\n            },\n            {\n                \"action\": {\n                    \"displayText\": \"Call\",\n                    \"postback\": {\n                        \"data\" : \"postback_data_1234\"\n                    },\n                    \"dialerAction\": {\n                        \"dialPhoneNumber\":{\n                        \"phoneNumber\": \"+15556667777\"\n                        }\n                    }\n                }\n            },\n            {\n                \"action\": {\n                    \"urlAction\":{\n                        \"openUrl\":{\n                            \"url\":\"https://www.google.com\"\n                        }\n                    },\n                    \"displayText\":\"Open website or deep link\",\n                    \"postback\":{\n                        \"data\":\"set_by_chatbot_open_url\"\n                    }\n                }\n            },\n            {\n                \"action\":{\n                    \"calendarAction\":{\n                        \"createCalendarEvent\":{\n                            \"startTime\":\"2017-03-14T00:00:00Z\",\n                            \"endTime\":\"2017-03-14T23:59:59Z\",\n                            \"title\":\"Meeting\",\n                            \"description\":\"GSG review meeting\"\n                        }\n                    },\n                    \"displayText\":\"Schedule Meeting\",\n                    \"postback\":{\n                        \"data\":\"set_by_chatbot_create_calendar_event\"\n                    }\n                }\n            },\n            {\n                \"action\":{\n                    \"mapAction\":{\n                        \"showLocation\":{\n                            \"location\":{\n                            \"latitude\":37.4220041,\n                            \"longitude\":-122.0862515,\n                            \"label\":\"Googleplex\"\n                            },\n                            \"fallbackUrl\":\"https://www.google.com/maps/@37.4219162,-122.078063,15z\"\n                        }\n                    },\n                    \"displayText\":\"Show location on a map\",\n                    \"postback\":{\n                        \"data\":\"set_by_chatbot_open_map\"\n                    }\n                }\n            },\n            {\n                \"action\":{\n                    \"mapAction\":{\n                        \"requestLocationPush\":{}\n                    },\n                    \"displayText\":\"Share location on a map\",\n                    \"postback\":{\n                        \"data\":\"set_by_chatbot_open_map\"\n                      }\n                }\n            }\n            ]\n        }\n    },\n    \"messageContact\": {\n        \"userContact\": \"+14251234567\"\n    }\n}\n```\n***4. Send isTyping indication***\n```json \n{\n  \"RCSMessage\": {\n    \"isTyping\": \"active\"\n  },\n  \"messageContact\": {\n    \"userContact\": \"+14251234567\"\n  }\n}\n```\n***5. Send a Rich Card with Suggested Chip List***\n```json \n{\n  \"RCSMessage\": {\n    \"trafficType\": \"advertisement\",\n    \"richcardMessage\": {\n      \"message\": {\n        \"generalPurposeCard\": {\n          \"layout\": {\n            \"cardOrientation\": \"HORIZONTAL\",\n            \"imageAlignment\": \"LEFT\"\n          },\n          \"content\": {\n            \"media\": {\n              \"mediaUrl\": \"https://cdn.server/path/media.mp4\",\n              \"mediaContentType\": \"video/mp4\",\n              \"mediaFileSize\": 2718288,\n              \"thumbnailUrl\": \"https://cdn.server/path/media.png\",\n              \"thumbnailContentType\": \"image/png\",\n              \"thumbnailFileSize\": 314159,\n              \"height\": \"MEDIUM_HEIGHT\",\n              \"contentDescription\": \"Textual description of media content, e. g. for use with screen readers.\"\n            },\n            \"title\": \"This is a single rich card.\",\n            \"description\": \"This is the description of the rich card. It's the first field that will be truncated if it exceeds the maximum width or height of a card.\"\n          }\n        }\n      }\n    },\n    \"suggestedChipList\": {\n      \"suggestions\": [\n        {\n          \"reply\": {\n            \"displayText\": \"Yes\",\n            \"postback\": {\n              \"data\": \"set_by_chatbot_reply_yes\"\n            }\n          }\n        },\n        {\n          \"reply\": {\n            \"displayText\": \"No\",\n            \"postback\": {\n              \"data\": \"set_by_chatbot_reply_no\"\n            }\n          }\n        },\n        {\n          \"action\": {\n            \"urlAction\": {\n              \"openUrl\": {\n                \"url\": \"https://www.gsma.com\"\n              }\n            },\n            \"displayText\": \"Open website or deep link\",\n            \"postback\": {\n              \"data\": \"set_by_chatbot_open_url\"\n            }\n          }\n        }\n      ]\n    }\n  },\n  \"messageContact\": {\n    \"userContact\": \"+14251234567\"\n  }\n}\n```",
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "description": "The request of sending message or isTyping indication is accepted by the Chatbot Platform and ready to send to the user.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "RCSMessage": {
+                      "type": "object",
+                      "properties": {
+                        "msgId": {
+                          "type": "string",
+                          "description": "This is the identifier generated by the Chatbot Platform for the message/isTyping to be sent."
+                        },
+                        "status": {
+                          "type": "string",
+                          "enum": [
+                            "pending",
+                            "sent",
+                            "failed"
+                          ],
+                          "description": "This is the initial status of the message/isTyping to be sent. 'pending' means it may take further process before the message can be sent to the user; 'sent' means the message has been sent to the user via operator's network; 'failed' means the message cannot be sent to the user via operatior's network. The Chatbot Platform shall provide further update of the message delivery status via webhook."
+                        },
+                        "timestamp": {
+                          "type": "string",
+                          "format": "date-time",
+                          "description": "This is the date-time the message sent request is accepted."
+                        }
+                      },
+                      "required": [
+                        "msgId",
+                        "status"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "RCSMessage"
+                  ]
+                },
+                "example": {
+                  "RCSMessage": {
+                    "msgId": "MzJmajlmamVzZGZ8bmk5MHNlbmRmZTAz",
+                    "status": "pending"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "This is a bad request with invalid input, invalid object, etc. "
+          },
+          "401": {
+            "description": "This request is unauthorized."
+          },
+          "404": {
+            "description": "The user contact or the chat ID cannot be found."
+          },
+          "5XX": {
+            "description": "Server error."
+          }
+        }
+      }
+    },
+    "/bot/v1/{botId}/messages/{msgId}/status": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/botIdParam"
+        },
+        {
+          "$ref": "#/components/parameters/msgIdParam"
+        }
+      ],
+      "get": {
+        "operationId": "getMessageStatus",
+        "summary": "This is the API to query the given message status.",
+        "description": "Although the message status can be updated via webhook, this API provides an alternative optional way to check the message status. Possible message status includes 'pending', 'sent', 'delivered', 'displayed', 'cancelled', 'revoked', and 'failed'.\n```http\ncurl -X GET -H \"Authorization: Bearer ACCESS_TOKEN\" https://api.dotgo.com/rcs/bot/v1/309JF3JSIJFEISIFJOE/messages/MzJmajlmamVzZGZ8bmk5MHNlbmRmZTAz/status\n```",
+        "tags": [
+          "Message Status"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK.   ",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "RCSMessage": {
+                      "type": "object",
+                      "properties": {
+                        "msgId": {
+                          "type": "string",
+                          "description": "this is the identifier of the message being queried "
+                        },
+                        "status": {
+                          "$ref": "#/components/schemas/MessageStatus"
+                        },
+                        "timestamp": {
+                          "type": "string",
+                          "format": "date-time",
+                          "description": "This is the last date-time the message is updated."
+                        }
+                      },
+                      "required": [
+                        "msgId",
+                        "status"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "RCSMessage"
+                  ]
+                },
+                "example": {
+                  "RCSMessage": {
+                    "msgId": "MzJmajlmamVzZGZ8bmk5MHNlbmRmZTAz",
+                    "status": "delivered",
+                    "timestamp": "2021-06-08T08:18:00.525Z"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "This request is unauthorized."
+          },
+          "404": {
+            "description": "The message ID cannot be found."
+          },
+          "5XX": {
+            "description": "Server error."
+          }
+        }
+      },
+      "put": {
+        "operationId": "updateMessageStatus",
+        "summary": "This is the API to send read notification to users for a received message or revoke a sent message.",
+        "description": "Message status that can be updated includes 'displayed' and 'cancelled'. When the status is marked as 'displayed', the Dotgo Platform shall send a display notification to the user if it has not been sent before. When the Dotgo platform receives a revocation request, the platform returns 204 NO_CONTENT. The 204 response doesn't confirm whether or not the underlying MaaP successfully revoked the message.\n\nThere is a small chance that your bot may initiate a revocation while the MaaP is in the process of delivering the message. In these rare cases, your bot receives a DELIVERED event for the message shortly after initiating the revocation request. It is a good practice to revoke messages that aren't delivered after a reasonable period of time as part of a fallback messaging strategy. A reasonable period of time depends on your bot's use case and should be short enough that you can follow a message revocation with another messaging strategy, such as SMS, without blocking your end users.   \n```http\ncurl -X PUT -H \"Authorization: Bearer ACCESS_TOKEN\" -H \"Content-Type: application/json\" https://api.dotgo.com/rcs/bot/v1/309JF3JSIJFEISIFJOE/messages/MzJmajlmamVzZGZ8bmk5MHNlbmRmZTAz/status\n```",
+        "tags": [
+          "Message Status"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "description": "The message status of a given message that the Chatbot wants to update.",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "RCSMessage": {
+                    "type": "object",
+                    "properties": {
+                      "status": {
+                        "type": "string",
+                        "enum": [
+                          "displayed",
+                          "cancelled"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "status"
+                    ]
+                  }
+                },
+                "required": [
+                  "RCSMessage"
+                ]
+              },
+              "example": {
+                "RCSMessage": {
+                  "status": "displayed"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "The status of the message has been updated by the Dotgo Platform. For 'displayed', a display notification will be sent to the user; for 'cancelled', the Dotgo Platform shall try to revoke the message if it has not been delivered to the user. NOTE, how to revoke a message is still under GSMA discussion so the Chatbot Platform may or may not support this operation."
+          },
+          "400": {
+            "description": "This is a bad request with invalid input, invalid object, etc "
+          },
+          "401": {
+            "description": "The request is unauthorized."
+          },
+          "404": {
+            "description": "The message ID cannot be found."
+          },
+          "5XX": {
+            "description": "Server error."
+          }
+        }
+      }
+    },
+    "/bot/v1/{botId}/files": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/botIdParam"
+        }
+      ],
+      "post": {
+        "operationId": "uploadFile",
+        "summary": "This is the API to upload a file to the CDN of the Dotgo platform.",
+        "description": "As per our policy, the Dotgo MaaP needs each file (to be sent to users) to be uploaded to Dotgo CDN first. The uploaded file can be used later as media content in the rich card or other message types such as file transfer or audio message. The file can be uploaded directly or by sharing a file URL.\n\n\n  **Examples:** \n  \n  \n  ***1. upload a raw file***\n  \n  ```http \n  POST /123456/files\n  HOST: example.com\n  Content-Length: xxx\n  Content-Type: multipart/form-data;\n  Content-Disposition: form-data; name=\"fileType\"\n  audio/mp4\n  Content-Disposition: form-data; name=\"until\"\n  2021-10-03T21:08:15\n  Content-Disposition: form-data; name=\"fileContent\";\n  Content-Type: audio/mp4\n  filename=\"audio.mp4\"\n\n  [file content goes there]\n  ------WebKitFormBoundaryWfPNVh4wuWBlyEyQ\n  ```\n  \n  ***2. upload a file by URL***\n  \n  ```http \n  POST /123456/files\n  HOST: example.com\n  Content-Length: xxx\n  Content-Type: multipart/form-data; boundary=----WebKitFormBoundaryWfPNVh4wuWBlyEyQ\n  Content-Disposition: form-data; name=\"fileType\"\n  audio/mp4\n  Content-Disposition: form-data; name=\"until\"\n  2021-10-03T21:08:15\n  Content-Disposition: form-data; name=\"fileUrl\"\n  http://www.example.com/files/example-audio.mp4\n  ------WebKitFormBoundaryWfPNVh4wuWBlyEyQ\n  ```",
+        "tags": [
+          "Files"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/FileData"
+              }
+            }
+          },
+          "description": "\n``` fileType and fileContent, or fileUrl must be provided ```"
+        },
+        "responses": {
+          "202": {
+            "description": "The file upload request has been accepted. Record the fileId and use it to check status of the file or to remove it from CDN. ",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "file": {
+                      "$ref": "#/components/schemas/File"
+                    }
+                  },
+                  "required": [
+                    "file"
+                  ]
+                },
+                "example": {
+                  "file": {
+                    "fileId": "MzJmajlmamVzZGZ8bmk5MHNlbmRmZTAz",
+                    "fileUrl": "https://api.dotgo.com/testbot/sample.jpg",
+                    "fileSize": 1475,
+                    "status": "pending",
+                    "validity": "2021-10-03T21:08:15"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "This is a bad request with invalid input, invalid object, etc. "
+          },
+          "401": {
+            "description": "The request is unauthorized"
+          },
+          "5XX": {
+            "description": "Server error"
+          }
+        }
+      }
+    },
+    "/bot/v1/{botId}/files/{fileId}": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/botIdParam"
+        },
+        {
+          "$ref": "#/components/parameters/fileIdParam"
+        }
+      ],
+      "delete": {
+        "operationId": "deleteFile",
+        "summary": "This is the API to delete the file which was previously uploaded to the CDN of the Dotgo Platform.",
+        "description": "Once the file is deleted, it won't be available for use any more. In addition, any reference to this file would be invalid. \n\n ```http\ncurl -X DELETE -H \"Authorization: Bearer ACCESS_TOKEN\"  https://api.dotgo.com/rcs/bot/v1/xFX3ijI4TeiqrE3QyCMHrw/files/bot-temp-file-upload-866f331d-d1cb-489c-8154-233662b98dd5\n```",
+        "tags": [
+          "Files"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "The file has been deleted successfully."
+          },
+          "401": {
+            "description": "The request is unauthorized."
+          },
+          "404": {
+            "description": "The file cannot be found."
+          },
+          "5XX": {
+            "description": "Server error."
+          }
+        }
+      },
+      "get": {
+        "operationId": "getFile",
+        "summary": "This is the API to retrieve a file's information.",
+        "description": "Although the file status can be updated via webhook, this API provides an alternative optional way to check the file status along with other information. Possible file status includes 'ready', and 'expired'.\n```http\ncurl -X GET -H \"Authorization: Bearer ACCESS_TOKEN\"  https://api.dotgo.com/rcs/bot/v1/xFX3ijI4TeiqrE3QyCMHrw/files/bot-temp-file-upload-866f331d-d1cb-489c-8154-233662b98dd5\n```",
+        "tags": [
+          "Files"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "file": {
+                      "$ref": "#/components/schemas/File"
+                    }
+                  },
+                  "required": [
+                    "file"
+                  ]
+                },
+                "example": {
+                  "file": {
+                    "fileId": "MzJmajlmamVzZGZ8bmk5MHNlbmRmZTAz",
+                    "fileUrl": "https://api.dotgo.com/testbot/sample.jpg",
+                    "fileSize": 1475,
+                    "status": "pending",
+                    "validity": "2021-10-03T21:08:15"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "The request is unauthorized."
+          },
+          "404": {
+            "description": "The file cannot be found."
+          },
+          "5XX": {
+            "description": "Server error."
+          }
+        }
+      }
+    },
+    "/bot/v1/{botId}/contactCapabilities": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/botIdParam"
+        },
+        {
+          "$ref": "#/components/parameters/userContactParam"
+        }
+      ],
+      "get": {
+        "operationId": "getCapability",
+        "summary": "This is the API to get the RCS capability of the given user's device. ",
+        "description": "Since this is a RCS based communication service, the developer or Chatbot can only communicate with the user using a RCS capable device. So the Chatbot shall conduct the RCS capability discovery to learn about whether the given user's device is RCS capable or not. \n\n  Possible capabilities include 'chat' (text message), 'fileTransfer' (standalone file transfer and AMR audio message), 'videoCall' (video calling), 'geolocationPush' (geolocation information), 'callComposer' (enrich calling pre-call setup), 'chatBotCommunication' (Rich Card and Suggested Chip List). The Chatbot shall only send the message type that the contact can support. The Chatbot can only send Rich Card and Suggested Chip List to the contact who has the 'chatBotCommunication' capability. The capability query needs to be invoked with the userContact info. \n\n```http\ncurl -X GET -H \"Authorization: Bearer ACCESS_TOKEN\" https://api.dotgo.com/rcs/bot/v1/309JF3JSIJFEISIFJOE/contactCapabilities?userContact=%2B14251234567\n```",
+        "tags": [
+          "Capability check"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "capabilities": {
+                      "type": "array",
+                      "description": "List of user device's capabilities. If user's device is rcs_disabled, an empty object '{}' will be returned.",
+                      "items": {
+                        "type": "string",
+                        "enum": [
+                          "chat",
+                          "fileTransfer",
+                          "videoCall",
+                          "geolocationPush",
+                          "callComposer",
+                          "chatBotCommunication"
+                        ]
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "capabilities": [
+                    "chat",
+                    "fileTransfer"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "The request is unauthorized."
+          }
+        }
+      }
+    },
+    "/bot/v1/{botId}/tester/{contactId}/cbp/{maapId}": {
+      "post": {
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "tags": [
+          "Tester Invite"
+        ],
+        "summary": "This API allows the developer to send an invite to a recipient RCS enabled user.",
+        "description": "This API allows the developer to send an invite to a recipient RCS enabled user so that the user can accept the invite and start a conversation with the chatbot. If the user rejects the invite, then he would be marked as a non-whitelisted user in the Operator or MNO MaaP, and needs to be sent again an invite to join the bot unless he accepts it. Currently this method is only supported by Google RBM MaaP.",
+        "operationId": "Testerinvite",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/botIdParam"
+          },
+          {
+            "$ref": "#/components/parameters/maapIdParam"
+          },
+          {
+            "$ref": "#/components/parameters/contactIdParam"
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Accepted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "statusCode": {
+                      "type": "string"
+                    },
+                    "response": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "example": {
+                  "statusCode": "Success",
+                  "response": "Submitted, Tester Invite Sent"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "The request is unauthorized."
+          }
+        }
+      }
+    },
+    "/cbp/{maapId}/bot/{botId}/messages": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/botIdParam"
+        },
+        {
+          "$ref": "#/components/parameters/maapIdParam"
+        }
+      ],
+      "post": {
+        "operationId": "callback",
+        "summary": "This is the callback API exposed by the Dotgo Platform.  Information received on this will be sent to the Chatbot. ",
+        "description": "The Dotgo Platform uses webhook exposed by Chatbot to send a HTTP POST payload when certain RCS events occur. How the Dotgo Platform configures webhooks with Chatbots is out of the scope of this specification. ",
+        "tags": [
+          "Webhook"
+        ],
+        "requestBody": {
+          "description": "Dotgo Platform may send following events to Chatbot. 1. message from user; 2. isTyping notification from user; 3. message status update; 4. response to suggested reply or action. The Chatbot shall always return a 200 OK HTTP response to the HTTP POST from the Dotgo Platform.\n\n**Examples:** \n\n***1. receive text message***\n  \n```json \n{\n  \"RCSMessage\": {\n    \"msgId\": \"Xs8CI3tdf\",\n    \"textMessage\": \"hello world\",\n    \"timestamp\": \"2017-09-26T01:33:20.315Z\"\n  },\n  \"messageContact\": {\n    \"userContact\": \"+14251234567\"\n  },\n  \"event\": \"message\"\n}\n```\n***2. receive a geolocation push***\n  \n```json \n{\n  \"RCSMessage\": {\n    \"msgId\": \"Xs8CI3tdf\",\n    \"geolocationPushMessage\": {\n      \"label\": \"meeting location\",\n      \"timestamp\": \"2017-09-26T01:46:04.868Z\",\n      \"expiry\": \"2017-09-26T01:46:04.868Z\",\n      \"timeOffset\": -300,\n      \"pos\": \"26.1181289 -80.1283921\",\n      \"radius\": 10\n    },\n    \"timestamp\": \"2017-09-26T01:33:20.315Z\"\n  },\n  \"messageContact\": {\n    \"userContact\": \"+14251234567\"\n  },\n  \"event\": \"message\"\n}\n``` \n***3. receive a file***\n  \n```json \n{\n  \"RCSMessage\": {\n    \"msgId\": \"Xs8CI3tdf\",\n    \"fileMessage\": {\n      \"thumbnailFileName\": \"t.jpg\",\n      \"thumbnailUrl\": \"http://www.example.com/files/t.jpg\",\n      \"thumbnailMIMEType\": \"image/jpeg\",\n      \"thumbnailFileSize\": 1234,\n      \"fileName\": \"f.jpg\",\n      \"fileUrl\": \"http://www.example.com/files/f.jpg\",\n      \"fileMIMEType\": \"image/jpeg\",\n      \"fileSize\": 1234567\n    },\n    \"timestamp\": \"2017-09-26T01:33:20.315Z\"\n  },\n  \"messageContact\": {\n    \"userContact\": \"+14251234567\"\n  },\n  \"event\": \"message\"\n}\n```\n***4. receive isTyping indication***\n  \n```json \n{\n  \"RCSMessage\": {\n    \"msgId\": \"Xs8CI3tdf\",\n    \"isTyping\": \"active\",\n    \"timestamp\": \"2017-09-26T01:33:20.315Z\"\n  },\n  \"messageContact\": {\n    \"userContact\": \"+14251234567\"\n  },\n  \"event\": \"isTyping\"\n}\n```  \n***5. receive message read notification from the user***\n  \n```json \n{\n  \"RCSMessage\": {\n    \"msgId\": \"MzJmajlmamVzZGZ8bmk5MHNlbmRmZTAz\"\n    \"status\": \"displayed\",\n    \"timestamp\": \"2017-09-26T01:33:20.315Z\"\n  },\n  \"messageContact\": {\n    \"userContact\": \"+14251234567\"\n  },\n  \"event\": \"messageStatus\"\n}\n```\n***6. receive message send failure notification***\n  \n```json \n{\n  \"RCSMessage\": {\n    \"msgId\": \"MzJmajlmamVzZGZ8bmk5MHNlbmRmZTAz\"\n    \"status\": \"failed\",\n    \"timestamp\": \"2017-09-26T01:33:20.315Z\"\n  },\n  \"event\": \"messageStatus\"\n}\n```\n***7. receive response to a suggested reply the user selects***\n  \n```json \n{\n  \"RCSMessage\": {\n    \"msgId\": \"MzJmajlmamVzZGZ8bmk5MHNlbmRmZTAz\",\n    \"suggestedResponse\": {\n      \"response\": {\n        \"reply\": {\n          \"displayText\": \"Yes\",\n          \"postback\": {\n            \"data\": \"set_by_chatbot_reply_yes\"\n          }\n        }\n      }\n    },\n    \"timestamp\": \"2017-09-26T01:33:20.315Z\"\n  },\n  \"messageContact\": {\n    \"userContact\": \"+14251234567\"\n  },\n  \"event\": \"response\"\n}\n```",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WebhookPayload"
+              },
+              "example": {
+                "RCSMessage": {
+                  "msgId": "4bef5db761924ba79480322c095c735b",
+                  "status": "displayed",
+                  "timestamp": "2017-09-26T01:33:20.315Z"
+                },
+                "messageContact": {
+                  "userContact": "+14251234567"
+                },
+                "event": "messageStatus"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The Callback playload is received by the Chatbot."
+          }
+        }
+      }
+    },
+    "/api/rich_promotion": {
+      "post": {
+        "servers": [
+          {
+            "url": "https://api.dotgo.com/rcsmessage",
+            "description": "richpromotion endpoint"
+          }
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "tags": [
+          "Rich Promotion and Notification APIs"
+        ],
+        "summary": "To send Rich Promotion messages",
+        "description": "Dotgo MaaP supports REST API’s for sending promotional messages over RCS into the native messaging App.\n\n  The message events and notifications will be delivered over the webhook that has been configured as part of the RCS agent creation and development.",
+        "operationId": "send messages",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "encoding": {},
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "audience_file": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "Text file with line separated number list. Number should be without space and should be prefixed with country code. Eg.:917499432010"
+                  },
+                  "data": {
+                    "type": "string",
+                    "format": "json",
+                    "description": "This contains JSON object with two fields botId and templateCode. \n  \n  ex :{ \"botId\":\"samplebotid\", \"templateCode\":\"samplecode\"}"
+                  }
+                },
+                "required": [
+                  "audience_file",
+                  "data"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The audience list has been accepted and message push has started using the configured template.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status_code": {
+                      "type": "integer",
+                      "description": "An Integer code indicating specific response."
+                    },
+                    "status_message": {
+                      "type": "string",
+                      "description": "Message which shows the result of the request."
+                    }
+                  }
+                },
+                "example": {
+                  "status_code": 10,
+                  "status_message": "success"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "This is a bad request with invalid input, invalid object, etc"
+          },
+          "401": {
+            "description": "The request is unauthorized."
+          },
+          "5XX": {
+            "description": "server error."
+          }
+        }
+      }
+    },
+    "/api/rich_notification": {
+      "post": {
+        "servers": [
+          {
+            "url": "https://api.dotgo.com/rcsmessage",
+            "description": "richpromotion endpoint"
+          }
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "tags": [
+          "Rich Promotion and Notification APIs"
+        ],
+        "summary": "To send Rich notifications",
+        "description": "Dotgo MaaP supports REST API’s for sending rich notifications over RCS into the native messaging App.\n  \n  The most critical and common advantage of this feature is in the alerts, reminders and notifications space. For eg.,  credit card fraud alerts, flight status updates, and package delivery notifications can be sent by the business to the consumer over the rich interactive RCS channel rather than via SMS.",
+        "operationId": "send notifications",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "description": "unique id which will be used to reference to further callback.",
+                    "type": "string"
+                  },
+                  "to": {
+                    "description": "mobile number to send the message.",
+                    "type": "string"
+                  },
+                  "template_code": {
+                    "description": "unique template code of notification template type.",
+                    "type": "string"
+                  },
+                  "custom_param": {
+                    "description": "Stringified JSON which contains value of custom params added in the template.",
+                    "type": "string",
+                    "format": "json"
+                  },
+                  "bot_id": {
+                    "description": "unique bot Id",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "id",
+                  "to",
+                  "template_code",
+                  "custom_param",
+                  "bot_id"
+                ]
+              },
+              "example": {
+                "id": "A853HB3434J",
+                "to": "918329707754",
+                "template_code": "notification_template",
+                "custom_param": "{\"price\" : \"400\",\"promocode\":\"ABCD\"}",
+                "bot_id": "MyAgent"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status_code": {
+                      "type": "integer",
+                      "description": "An Integer code indicating specific response.10 for success, 11 for failed"
+                    },
+                    "status_message": {
+                      "type": "string",
+                      "description": "Message which shows the result of the request. Success or failed"
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "message stating that number is rcs enabled or not. And Sending mode, via RCS or SMS.\n\n  Value - \n    \n    'Provided number's [918329707754] device is RCS enabled. So sending via the RCS agent.' OR\n    \n    'Provided number's [918329707754] device is NOT RCS enabled. So falling back to SMS'"
+                    }
+                  }
+                },
+                "example": {
+                  "status_code": 10,
+                  "status_message": "success",
+                  "message": [
+                    "Provided number's [918329707754] device is RCS enabled. So sending via the RCS agent."
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "This is a bad request with invalid input, invalid object, etc"
+          },
+          "401": {
+            "description": "The request is unauthorized."
+          },
+          "5XX": {
+            "description": "server error."
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "parameters": {
+      "botIdParam": {
+        "in": "path",
+        "name": "botId",
+        "required": true,
+        "schema": {
+          "type": "string",
+          "example": "testbot"
+        },
+        "allowReserved": false
+      },
+      "msgIdParam": {
+        "in": "path",
+        "name": "msgId",
+        "required": true,
+        "schema": {
+          "type": "string",
+          "example": "45a47743-169c-4e9e-88a8-e9b6d66188ce"
+        }
+      },
+      "fileIdParam": {
+        "description": "fileId received from file upload API.",
+        "in": "path",
+        "name": "fileId",
+        "required": true,
+        "schema": {
+          "type": "string",
+          "example": "MzJmajlmamVzZGZ8bmk5MHNlbmRmZTAz"
+        }
+      },
+      "maapIdParam": {
+        "in": "path",
+        "name": "maapId",
+        "required": true,
+        "schema": {
+          "type": "string"
+        },
+        "example": "MPJ01",
+        "allowReserved": false
+      },
+      "userContactParam": {
+        "in": "query",
+        "name": "userContact",
+        "description": "Based on the current RCS UP2.0, user contact is MSISDN in E.164 format, for example, \"+14251234567\".",
+        "schema": {
+          "type": "string"
+        },
+        "example": "+14251234567"
+      },
+      "contactIdParam": {
+        "in": "path",
+        "name": "contactId",
+        "required": true,
+        "schema": {
+          "type": "string"
+        },
+        "example": "+14251234567"
+      }
+    },
+    "securitySchemes": {
+      "BearerAuth": {
+        "type": "http",
+        "scheme": "bearer"
+      },
+      "BasicAuth": {
+        "type": "http",
+        "scheme": "basic"
+      }
+    },
+    "schemas": {
+      "RCSMessageWithContactInfo": {
+        "description": "This is the data model which includes supported RCS message type and contact information.",
+        "type": "object",
+        "properties": {
+          "RCSMessage": {
+            "$ref": "#/components/schemas/RCSMessage"
+          },
+          "messageContact": {
+            "$ref": "#/components/schemas/MessageContact"
+          }
+        },
+        "required": [
+          "RCSMessage",
+          "messageContact"
+        ]
+      },
+      "RCSMessage": {
+        "description": "This is the data model of a valid RCS message.",
+        "type": "object",
+        "anyOf": [
+          {
+            "$ref": "#/components/schemas/RCSMessageBase"
+          },
+          {
+            "$ref": "#/components/schemas/RCSMessageType"
+          }
+        ]
+      },
+      "RCSMessageBase": {
+        "description": "This is the data model which includes the basic properties about a RCS message exchanged between the user and the Chatbot.",
+        "type": "object",
+        "properties": {
+          "msgId": {
+            "type": "string",
+            "description": "This is the identifier of the message, and this value is provided by the Dotgo Platform only."
+          },
+          "status": {
+            "$ref": "#/components/schemas/MessageStatus"
+          },
+          "trafficType": {
+            "type": "string",
+            "description": "This is traffic type specified in US15-6 of RCC.71 and 3.6.7.2 of RCC.07. The Chatbot should set this value if the traffic belongs one of required type based on the agreement between the Chatbot Platform and the Chatbot.",
+            "enum": [
+              "advertisement",
+              "payment",
+              "premium",
+              "subscription"
+            ]
+          },
+          "expiry": {
+            "type": "string",
+            "format": "date-time",
+            "description": "This is the expiry of the message. The underlying MaaP Platform will try to revoke this message after this expiry."
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "description": "This is the last date-time the message is updated."
+          }
+        }
+      },
+      "RCSMessageType": {
+        "description": "This defines different RCS message types which can be exchanged between the Chatbot and users.",
+        "type": "object",
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/RCSContentMessageWithSuggestedChipList"
+          },
+          {
+            "properties": {
+              "isTyping": {
+                "type": "string",
+                "description": "The isTyping notification to be sent to the user for the given Chat, or the isTyping notification received from the user for the given Chat. If sending the isTyping notification to the user, the value can be set to 'active' or 'idle'. The default active-state refresh interval is 120 seconds, and the default idle time-out interval is 15 seconds. In another word, if there is no another 'active' notification is sent by the bot within 15 seconds, the platform will send the 'idle' notification to the user.",
+                "enum": [
+                  "active",
+                  "idle"
+                ]
+              }
+            },
+            "required": [
+              "isTyping"
+            ]
+          }
+        ]
+      },
+      "RCSContentMessageWithSuggestedChipList": {
+        "description": "One and only one suggestedChipList can be used together with one and only one textMessage, fileMessage, audioMessage, geolocationPushMessage, richcardMessage if sending a message with the suggested chip list to the user.",
+        "type": "object",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/RCSContentMessage"
+          },
+          {
+            "properties": {
+              "suggestedChipList": {
+                "type": "object",
+                "properties": {
+                  "suggestions": {
+                    "$ref": "#/components/schemas/Suggestions"
+                  }
+                },
+                "description": "This is the Suggested Chip List json object following UP 2.0 specification,  a.k.a. the \"suggestions\" object. The Chatbot shall not send a chip list alone and it has to be associated with a RCSContentMessage."
+              }
+            }
+          }
+        ]
+      },
+      "Suggestions": {
+        "type": "object",
+        "properties": {
+          "suggestions": {
+            "type": "array",
+            "items": {
+              "oneOf": [
+                {
+                  "$ref": "#/components/schemas/Reply"
+                },
+                {
+                  "$ref": "#/components/schemas/Action"
+                }
+              ]
+            },
+            "minItems": 1,
+            "maxItems": 11
+          }
+        }
+      },
+      "Suggestion": {
+        "type": "object",
+        "description": "Common base definition for suggested replies and suggested actions by user.",
+        "properties": {
+          "displayText": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 25
+          },
+          "postback": {
+            "type": "object",
+            "properties": {
+              "data": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "data"
+            ]
+          }
+        },
+        "required": [
+          "displayText"
+        ]
+      },
+      "RCSContentMessage": {
+        "description": "One and only one of textMessage, fileMessage, audioMessage, geolocationPushMessage, or richcardMessage should be provided if sending a message to the user. The user can send textMessage, fileMessage, audioMessage, or geoLocationPushMessage to the Chatbot. The user can send textMessage, fileMessage, audioMessage, or geoLocationPushMessage to the Chatbot.",
+        "type": "object",
+        "oneOf": [
+          {
+            "properties": {
+              "textMessage": {
+                "type": "string",
+                "description": "This is a normal RCS text based Chat message.",
+                "example": {
+                  "textMessage": "hello world"
+                }
+              }
+            },
+            "required": [
+              "textMessage"
+            ]
+          },
+          {
+            "properties": {
+              "fileMessage": {
+                "$ref": "#/components/schemas/FileMessage"
+              }
+            },
+            "required": [
+              "fileMessage"
+            ]
+          },
+          {
+            "properties": {
+              "audioMessage": {
+                "$ref": "#/components/schemas/AudioMessage"
+              }
+            },
+            "required": [
+              "audioMessage"
+            ]
+          },
+          {
+            "properties": {
+              "geolocationPushMessage": {
+                "$ref": "#/components/schemas/GeolocationPushMessage"
+              }
+            },
+            "required": [
+              "geolocationPushMessage"
+            ]
+          },
+          {
+            "properties": {
+              "richcardMessage": {
+                "$ref": "#/components/schemas/Message"
+              }
+            },
+            "required": [
+              "richcardMessage"
+            ]
+          }
+        ]
+      },
+      "FileMessage": {
+        "type": "object",
+        "description": "This is a file to be sent via RCS File Transfer.",
+        "properties": {
+          "thumbnailFileName": {
+            "type": "string",
+            "description": "The file name of the thumbnail."
+          },
+          "thumbnailUrl": {
+            "type": "string",
+            "format": "url",
+            "description": "The URL of the thumbnail."
+          },
+          "thumbnailMIMEType": {
+            "type": "string",
+            "description": "The MIME type of the thumbnail."
+          },
+          "thumbnailFileSize": {
+            "type": "integer",
+            "format": "int32",
+            "description": "The size of the thumbnail."
+          },
+          "fileName": {
+            "type": "string",
+            "description": "The file name."
+          },
+          "fileUrl": {
+            "type": "string",
+            "format": "url",
+            "description": "The URL of the file."
+          },
+          "fileMIMEType": {
+            "type": "string",
+            "description": "The MIME type of the file."
+          },
+          "fileSize": {
+            "type": "integer",
+            "format": "int32",
+            "description": "The size of the file."
+          }
+        },
+        "required": [
+          "fileUrl"
+        ]
+      },
+      "AudioMessage": {
+        "type": "object",
+        "description": "This is an audio file to be sent via RCS Audio Message. RCS audio message uses Adaptive Multi-Rate (AMR) codec and is limited to a maximum duration of 10 minutes.",
+        "properties": {
+          "fileName": {
+            "type": "string",
+            "description": "The file name."
+          },
+          "fileUrl": {
+            "type": "string",
+            "format": "url",
+            "description": "The URL of the file."
+          },
+          "fileMIMEType": {
+            "type": "string",
+            "description": "The MIME type of the file."
+          },
+          "fileSize": {
+            "type": "integer",
+            "format": "int32",
+            "description": "The size of the file."
+          },
+          "playingLength": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 1,
+            "maximum": 600,
+            "description": "The playing length of the audio."
+          }
+        },
+        "required": [
+          "fileUrl"
+        ]
+      },
+      "GeolocationPushMessage": {
+        "type": "object",
+        "description": "This is a geolocation push to be sent via RCS Geolocation Push.",
+        "properties": {
+          "label": {
+            "type": "string",
+            "description": "This can be used to tag the nature of the location.",
+            "example": "meeting location",
+            "maxLength": 200
+          },
+          "timestamp": {
+            "type": "string",
+            "description": "This is the time when the location information was pushed.",
+            "format": "date-time"
+          },
+          "expiry": {
+            "type": "string",
+            "description": "This is an absolute date at which time the recipient is no longer permitted to possess the location information.",
+            "format": "date-time"
+          },
+          "timeOffset": {
+            "type": "integer",
+            "description": "This is the time zone where the location information was pushed, expressed as the number of minutes away from UTC.",
+            "example": -300
+          },
+          "pos": {
+            "type": "string",
+            "description": "This is the coordinates in WGS 84 (latitude, longitude) decimal notion, providing the latitude and longitude as “double”-encoded decimal numbers representing the degrees, separated by a space starting with the latitude.",
+            "example": "26.1181289 -80.1283921"
+          },
+          "radius": {
+            "type": "number",
+            "description": "The radius of the circle will be represented in meters, which will be indicated by setting the unit of measure attribute of the radius element to the value of EPSG9001.",
+            "example": 10
+          }
+        },
+        "required": [
+          "pos"
+        ]
+      },
+      "MessageContact": {
+        "type": "object",
+        "description": "A contact presenting a RCS user.",
+        "properties": {
+          "userContact": {
+            "type": "string",
+            "description": "Based on the current RCS UP2.0, user contact is MSISDN in E.164 format.",
+            "example": "+14251234567"
+          }
+        }
+      },
+      "MessageStatus": {
+        "type": "string",
+        "description": "This is the status of the message, and this applies to message sent from Chatbot to users and message sent from users to Chatbot. 'pending' - the message status is unknown; 'sent' - the message has been sent to the contact; 'delivered' - the message has been successfully delivered to the contact; 'displayed' - the contact has read the message; 'cancelled' - the message has been requested to be revoked by the sender; 'revoked' - the message has been revoked successfully; 'failed' - fail to send the message. ",
+        "enum": [
+          "pending",
+          "sent",
+          "delivered",
+          "displayed",
+          "cancelled",
+          "revoked",
+          "failed"
+        ]
+      },
+      "Reply": {
+        "type": "object",
+        "description": "Definition of a suggested reply.",
+        "properties": {
+          "reply": {
+            "properties": {
+              "displayText": {
+                "type": "string"
+              },
+              "postback": {
+                "type": "object",
+                "properties": {
+                  "data": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "data"
+                ]
+              }
+            },
+            "required": [
+              "displayText"
+            ]
+          }
+        }
+      },
+      "Action": {
+        "type": "object",
+        "description": "Definition of a suggested actions.",
+        "properties": {
+          "action": {
+            "type": "object",
+            "allOf": [
+              {
+                "properties": {
+                  "displayText": {
+                    "type": "string"
+                  },
+                  "postback": {
+                    "type": "object",
+                    "properties": {
+                      "data": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "oneOf": [
+                  {
+                    "properties": {
+                      "urlAction": {
+                        "$ref": "#/components/schemas/urlAction"
+                      }
+                    }
+                  },
+                  {
+                    "properties": {
+                      "dialerAction": {
+                        "$ref": "#/components/schemas/dialerAction"
+                      }
+                    }
+                  },
+                  {
+                    "properties": {
+                      "mapAction": {
+                        "$ref": "#/components/schemas/mapAction"
+                      }
+                    }
+                  },
+                  {
+                    "properties": {
+                      "calendarAction": {
+                        "$ref": "#/components/schemas/calenderAction"
+                      }
+                    }
+                  },
+                  {
+                    "properties": {
+                      "composeAction": {
+                        "$ref": "#/components/schemas/composeAction"
+                      }
+                    }
+                  },
+                  {
+                    "properties": {
+                      "deviceAction": {
+                        "$ref": "#/components/schemas/deviceAction"
+                      }
+                    }
+                  },
+                  {
+                    "properties": {
+                      "settingsAction": {
+                        "$ref": "#/components/schemas/settingsAction"
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      },
+      "urlAction": {
+        "type": "object",
+        "description": "Suggested actions to interact a website or deep app link.",
+        "properties": {
+          "openUrl": {
+            "type": "object",
+            "oneOf": [
+              {
+                "properties": {
+                  "url": {
+                    "type": "string"
+                  },
+                  "application": {
+                    "type": "string",
+                    "enum": [
+                      "browser"
+                    ]
+                  }
+                },
+                "required": [
+                  "url"
+                ]
+              },
+              {
+                "properties": {
+                  "url": {
+                    "type": "string",
+                    "format": "uri"
+                  },
+                  "application": {
+                    "type": "string",
+                    "enum": [
+                      "webview"
+                    ]
+                  },
+                  "viewMode": {
+                    "type": "string",
+                    "enum": [
+                      "full",
+                      "half",
+                      "tall"
+                    ]
+                  },
+                  "parameters": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 200
+                  }
+                },
+                "required": [
+                  "url",
+                  "application"
+                ]
+              }
+            ]
+          }
+        }
+      },
+      "dialerAction": {
+        "type": "object",
+        "description": "Suggested actions for interacting with a phone number.",
+        "oneOf": [
+          {
+            "properties": {
+              "dialPhoneNumber": {
+                "type": "object",
+                "properties": {
+                  "phoneNumber": {
+                    "type": "string"
+                  },
+                  "fallbackUrl": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "phoneNumber"
+                ]
+              }
+            },
+            "required": [
+              "dialPhoneNumber"
+            ]
+          },
+          {
+            "properties": {
+              "dialEnrichedCall": {
+                "type": "object",
+                "properties": {
+                  "phoneNumber": {
+                    "type": "string"
+                  },
+                  "subject": {
+                    "type": "string",
+                    "maxLength": 60
+                  },
+                  "fallbackUrl": {
+                    "type": "string",
+                    "format": "uri"
+                  }
+                },
+                "required": [
+                  "phoneNumber"
+                ]
+              }
+            },
+            "required": [
+              "dialEnrichedCall"
+            ]
+          },
+          {
+            "properties": {
+              "dialVideoCall": {
+                "type": "object",
+                "properties": {
+                  "phoneNumber": {
+                    "type": "string"
+                  },
+                  "fallbackUrl": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "phoneNumber"
+                ]
+              }
+            },
+            "required": [
+              "dialVideoCall"
+            ]
+          }
+        ]
+      },
+      "mapAction": {
+        "type": "object",
+        "description": "Suggested actions for interacting with a location on a map.",
+        "oneOf": [
+          {
+            "properties": {
+              "showLocation": {
+                "type": "object",
+                "description": "Shows a given location on a map.",
+                "properties": {
+                  "location": {
+                    "type": "object",
+                    "properties": {
+                      "latitude": {
+                        "type": "number"
+                      },
+                      "longitude": {
+                        "type": "number"
+                      },
+                      "label": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 100
+                      },
+                      "query": {
+                        "type": "string",
+                        "minLength": 3,
+                        "maxLength": 200
+                      }
+                    },
+                    "required": [
+                      "latitude",
+                      "longitude"
+                    ]
+                  },
+                  "fallbackUrl": {
+                    "type": "string",
+                    "format": "uri"
+                  }
+                },
+                "required": [
+                  "location"
+                ]
+              }
+            },
+            "required": [
+              "showLocation"
+            ]
+          },
+          {
+            "properties": {
+              "requestLocationPush": {
+                "type": "object",
+                "description": "One-time request to send a location from user to chatbot"
+              }
+            },
+            "required": [
+              "requestLocationPush"
+            ]
+          }
+        ]
+      },
+      "calenderAction": {
+        "type": "object",
+        "description": "Suggested actions for interacting with a calendar event.",
+        "properties": {
+          "createCalendarEvent": {
+            "type": "object",
+            "properties": {
+              "startTime": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "endTime": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "title": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 100
+              },
+              "description": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 500
+              },
+              "fallbackUrl": {
+                "type": "string",
+                "format": "uri"
+              }
+            },
+            "required": [
+              "startTime",
+              "endTime",
+              "title"
+            ]
+          }
+        }
+      },
+      "composeAction": {
+        "type": "object",
+        "description": "Suggested actions for composing draft messages",
+        "oneOf": [
+          {
+            "properties": {
+              "composeTextMessage": {
+                "type": "object",
+                "description": "Compose a draft text message.",
+                "properties": {
+                  "phoneNumber": {
+                    "type": "string"
+                  },
+                  "text": {
+                    "type": "string",
+                    "maxLength": 100
+                  }
+                },
+                "required": [
+                  "phoneNumber",
+                  "text"
+                ]
+              }
+            },
+            "required": [
+              "composeTextMessage"
+            ]
+          },
+          {
+            "properties": {
+              "composeRecordingMessage": {
+                "description": "Compose a draft message with a media recording.",
+                "type": "object",
+                "properties": {
+                  "phoneNumber": {
+                    "type": "string"
+                  },
+                  "type": {
+                    "type": "string",
+                    "enum": [
+                      "AUDIO",
+                      "VIDEO"
+                    ]
+                  }
+                },
+                "required": [
+                  "phoneNumber",
+                  "type"
+                ]
+              }
+            },
+            "required": [
+              "composeRecordingMessage"
+            ]
+          }
+        ]
+      },
+      "deviceAction": {
+        "type": "object",
+        "description": "Suggested actions for interacting with the user's device..",
+        "oneOf": [
+          {
+            "properties": {
+              "requestDeviceSpecifics": {
+                "type": "object",
+                "description": "Request specifics about the user's device."
+              }
+            },
+            "required": [
+              "requestDeviceSpecifics"
+            ]
+          }
+        ],
+        "required": [
+          "deviceAction"
+        ]
+      },
+      "settingsAction": {
+        "type": "object",
+        "description": "Suggested actions for interacting with app settings.",
+        "oneOf": [
+          {
+            "properties": {
+              "disableAnonymization": {
+                "type": "object",
+                "description": "Ask the user to disable the anonymization setting",
+                "required": [
+                  "disableAnonymization"
+                ]
+              }
+            }
+          },
+          {
+            "properties": {
+              "enableDisplayedNotifications": {
+                "type": "object",
+                "description": "Ask the user to enable sending displayed notifications.",
+                "required": [
+                  "enableDisplayedNotifications"
+                ]
+              }
+            },
+            "required": [
+              "settingsAction"
+            ]
+          }
+        ]
+      },
+      "sharedData": {
+        "type": "object",
+        "description": "Device specifics shared by the client with the chatbot platform.",
+        "properties": {
+          "deviceSpecifics": {
+            "type": "object",
+            "properties": {
+              "deviceModel": {
+                "title": "Short description of the device model.",
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 10
+              },
+              "platformVersion": {
+                "title": "Version information about the operating system on the device .",
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 20
+              },
+              "clientVendor": {
+                "title": "Short code for client vendor, same as used during RCS autoconfiguration.",
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 4
+              },
+              "clientVersion": {
+                "title": "Version information about the client, same as used during RCS autoconfiguration ",
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 15
+              },
+              "batteryRemainingMinutes": {
+                "title": "Remaining battery use of device in minutes",
+                "type": "integer",
+                "minimum": 0
+              }
+            }
+          }
+        }
+      },
+      "Message": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "object",
+            "allOf": [
+              {
+                "oneOf": [
+                  {
+                    "$ref": "#/components/schemas/Richcard"
+                  },
+                  {
+                    "$ref": "#/components/schemas/Carousel"
+                  }
+                ]
+              },
+              {
+                "properties": {
+                  "suggestedChipList": {
+                    "type": "object",
+                    "properties": {
+                      "suggestions": {
+                        "$ref": "#/components/schemas/Suggestions"
+                      }
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        }
+      },
+      "Response": {
+        "type": "object",
+        "properties": {
+          "response": {
+            "type": "object",
+            "oneOf": [
+              {
+                "properties": {
+                  "reply": {
+                    "$ref": "#/components/schemas/Suggestion"
+                  },
+                  "action": {
+                    "$ref": "#/components/schemas/Suggestion"
+                  }
+                }
+              }
+            ]
+          }
+        }
+      },
+      "Richcard": {
+        "type": "object",
+        "properties": {
+          "generalPurposeCard": {
+            "type": "object",
+            "properties": {
+              "layout": {
+                "type": "object",
+                "oneOf": [
+                  {
+                    "properties": {
+                      "cardOrientation": {
+                        "type": "string",
+                        "enum": [
+                          "VERTICAL"
+                        ]
+                      },
+                      "titleFontStyle": {
+                        "type": "object",
+                        "properties": {
+                          "fontStyle": {
+                            "type": "array",
+                            "items": {
+                              "type": "string",
+                              "enum": [
+                                "italics",
+                                "bold",
+                                "underline"
+                              ]
+                            },
+                            "minItems": 1,
+                            "maxItems": 3
+                          }
+                        }
+                      },
+                      "descriptionFontStyle": {
+                        "type": "object",
+                        "properties": {
+                          "fontStyle": {
+                            "type": "array",
+                            "items": {
+                              "type": "string",
+                              "enum": [
+                                "italics",
+                                "bold",
+                                "underline"
+                              ]
+                            },
+                            "minItems": 1,
+                            "maxItems": 3
+                          }
+                        }
+                      },
+                      "style": {
+                        "type": "object",
+                        "properties": {
+                          "cardStyle": {
+                            "type": "string",
+                            "format": "uri"
+                          }
+                        }
+                      }
+                    },
+                    "required": [
+                      "cardOrientation"
+                    ]
+                  },
+                  {
+                    "properties": {
+                      "cardOrientation": {
+                        "type": "string",
+                        "enum": [
+                          "HORIZONTAL"
+                        ]
+                      },
+                      "imageAlignment": {
+                        "type": "string",
+                        "enum": [
+                          "LEFT",
+                          "RIGHT"
+                        ]
+                      },
+                      "titleFontStyle": {
+                        "type": "object",
+                        "properties": {
+                          "fontStyle": {
+                            "type": "array",
+                            "items": {
+                              "type": "string",
+                              "enum": [
+                                "italics",
+                                "bold",
+                                "underline"
+                              ]
+                            },
+                            "minItems": 1,
+                            "maxItems": 3
+                          }
+                        }
+                      },
+                      "descriptionFontStyle": {
+                        "type": "object",
+                        "properties": {
+                          "fontStyle": {
+                            "type": "array",
+                            "items": {
+                              "type": "string",
+                              "enum": [
+                                "italics",
+                                "bold",
+                                "underline"
+                              ]
+                            },
+                            "minItems": 1,
+                            "maxItems": 3
+                          }
+                        }
+                      },
+                      "style": {
+                        "type": "object",
+                        "properties": {
+                          "cardStyle": {
+                            "type": "string",
+                            "format": "uri"
+                          }
+                        }
+                      }
+                    },
+                    "required": [
+                      "cardOrientation",
+                      "imageAlignment"
+                    ]
+                  }
+                ]
+              },
+              "content": {
+                "type": "object",
+                "properties": {
+                  "media": {
+                    "type": "object",
+                    "properties": {
+                      "mediaUrl": {
+                        "type": "string",
+                        "format": "uri"
+                      },
+                      "mediaContentType": {
+                        "type": "string"
+                      },
+                      "mediaFileSize": {
+                        "type": "integer"
+                      },
+                      "thumbnailUrl": {
+                        "type": "string",
+                        "format": "uri"
+                      },
+                      "thumbnailContentType": {
+                        "type": "string"
+                      },
+                      "thumbnailFileSize": {
+                        "type": "integer"
+                      },
+                      "height": {
+                        "type": "string",
+                        "enum": [
+                          "SHORT_HEIGHT",
+                          "MEDIUM_HEIGHT",
+                          "TALL_HEIGHT"
+                        ]
+                      },
+                      "contentDescription": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 200
+                      }
+                    },
+                    "required": [
+                      "mediaUrl",
+                      "mediaContentType",
+                      "mediaFileSize",
+                      "height"
+                    ]
+                  },
+                  "title": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 200
+                  },
+                  "description": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 200
+                  },
+                  "suggestions": {
+                    "$ref": "#/components/schemas/Suggestions"
+                  }
+                },
+                "required": [
+                  "cardOrientation"
+                ]
+              }
+            },
+            "required": [
+              "layout",
+              "content"
+            ]
+          }
+        },
+        "example": {
+          "RCSMessage": {
+            "richcardMessage": {
+              "message": {
+                "generalPurposeCard": {
+                  "layout": {
+                    "cardOrientation": "VERTICAL"
+                  },
+                  "content": {
+                    "media": {
+                      "mediaUrl": "https://www.google.com/logos/doodles/2015/googles-new-logo-5078286822539264.3-hp2x.gif",
+                      "height": "MEDIUM_HEIGHT"
+                    },
+                    "title": "TESTING - rich card with only required fields."
+                  }
+                }
+              }
+            }
+          },
+          "messageContact": {
+            "userContact": "+14251234567"
+          }
+        }
+      },
+      "Carousel": {
+        "type": "object",
+        "properties": {
+          "generalPurposeCardCarousel": {
+            "type": "object",
+            "properties": {
+              "layout": {
+                "type": "object",
+                "properties": {
+                  "cardWidth": {
+                    "type": "string",
+                    "default": "SMALL_WIDTH",
+                    "enum": [
+                      "SMALL_WIDTH",
+                      "MEDIUM_WIDTH"
+                    ]
+                  },
+                  "titleFontStyle": {
+                    "type": "object",
+                    "properties": {
+                      "fontStyle": {
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "enum": [
+                            "italics",
+                            "bold",
+                            "underline"
+                          ]
+                        },
+                        "minItems": 1,
+                        "maxItems": 3
+                      }
+                    }
+                  },
+                  "descriptionFontStyle": {
+                    "type": "object",
+                    "properties": {
+                      "fontStyle": {
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "enum": [
+                            "italics",
+                            "bold",
+                            "underline"
+                          ]
+                        },
+                        "minItems": 1,
+                        "maxItems": 3
+                      }
+                    }
+                  },
+                  "style": {
+                    "type": "object",
+                    "properties": {
+                      "cardStyle": {
+                        "type": "string",
+                        "format": "uri"
+                      }
+                    }
+                  }
+                },
+                "required": [
+                  "cardWidth"
+                ]
+              },
+              "content": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "media": {
+                      "type": "object",
+                      "properties": {
+                        "mediaUrl": {
+                          "type": "string",
+                          "format": "uri"
+                        },
+                        "mediaContentType": {
+                          "type": "string"
+                        },
+                        "mediaFileSize": {
+                          "type": "integer"
+                        },
+                        "thumbnailUrl": {
+                          "type": "string",
+                          "format": "uri"
+                        },
+                        "thumbnailContentType": {
+                          "type": "string"
+                        },
+                        "thumbnailFileSize": {
+                          "type": "integer"
+                        },
+                        "height": {
+                          "type": "string",
+                          "enum": [
+                            "SHORT_HEIGHT",
+                            "MEDIUM_HEIGHT",
+                            "TALL_HEIGHT"
+                          ]
+                        },
+                        "contentDescription": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 200
+                        }
+                      },
+                      "required": [
+                        "mediaUrl",
+                        "mediaContentType",
+                        "mediaFileSize",
+                        "height"
+                      ]
+                    },
+                    "title": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 200
+                    },
+                    "description": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 200
+                    },
+                    "suggestedChipList": {
+                      "$ref": "#/components/schemas/Suggestions"
+                    }
+                  },
+                  "required": [
+                    "media",
+                    "description",
+                    "title"
+                  ]
+                },
+                "minItems": 2,
+                "maxItems": 12
+              }
+            },
+            "required": [
+              "layout",
+              "content"
+            ]
+          }
+        },
+        "required": [
+          "generalPurposeCardCarousel"
+        ],
+        "example": {
+          "RCSMessage": {
+            "richcardMessage": {
+              "message": {
+                "generalPurposeCardCarousel": {
+                  "layout": {
+                    "cardWidth": "MEDIUM_WIDTH"
+                  },
+                  "content": [
+                    {
+                      "media": {
+                        "mediaUrl": "https://konnect.kirusa.com/uploads/rcsTemplates/ReachMe.png",
+                        "height": "SHORT_HEIGHT"
+                      },
+                      "title": "This is the second rich card in a carousel.",
+                      "description": "This is the description of the rich card. It's the first field that will be truncated if it exceeds the maximum width or height of a card."
+                    },
+                    {
+                      "media": {
+                        "mediaUrl": "https://www.google.com/logos/doodles/2015/googles-new-logo-5078286822539264.3-hp2x.gif",
+                        "height": "SHORT_HEIGHT"
+                      },
+                      "title": "This is the second rich card in a carousel."
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "messageContact": {
+            "userContact": "+14251234567"
+          }
+        }
+      },
+      "FileData": {
+        "type": "object",
+        "properties": {
+          "fileType": {
+            "type": "string",
+            "example": "image/jpg",
+            "description": "This is the MIME content type of the uploaded file. e.g.,) image/jpeg, audio/mp4, video/mpeg."
+          },
+          "until": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2020-11-14T11:59:47",
+            "description": "This specifies how long the Chatbot wants to keep the file in the CDN, ex - 2020-11-14T11:59:47."
+          },
+          "fileContent": {
+            "type": "string",
+            "format": "binary",
+            "description": "This is the binary data of the actual file."
+          },
+          "fileUrl": {
+            "type": "string",
+            "format": "url",
+            "example": "http://www.example.com/files/example-image.jpg",
+            "description": "This is the url link to a file hosted at somewhere, ex - http://www.example.com/files/sample.jpg."
+          }
+        }
+      },
+      "File": {
+        "type": "object",
+        "description": "This is the file uploaded to the Dotgo Platform CDN for future usage, e.g., file transfer, rich card, audio message, etc.",
+        "properties": {
+          "fileId": {
+            "type": "string",
+            "example": "MzJmajlmamVzZGZ8bmk5MHNlbmRmZTAz",
+            "description": "This is the identifier for the uploaded file."
+          },
+          "fileUrl": {
+            "type": "string",
+            "example": "https://api.dotgo.com/testbot/sample.jpg",
+            "format": "url",
+            "description": "This is the url link that the Chatbot can use for file transfer, rich card, audio message, etc."
+          },
+          "fileSize": {
+            "type": "integer",
+            "format": "int",
+            "description": "The file size.",
+            "example": 1675
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "ready",
+              "expired",
+              "invalid"
+            ],
+            "description": "This is the status of the uploaded file. 'pending'-the file is not ready to use yet; 'ready'-the file is ready to use; 'expired'-the validity expires; 'invalid'-the file cannot be used for some reasons."
+          },
+          "validity": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2021-10-03T21:08:15",
+            "description": "This is the validity of the file determined by the Chatbot Platform and the file may be not accessible after this."
+          }
+        },
+        "required": [
+          "fileId"
+        ]
+      },
+      "Reason": {
+        "type": "object",
+        "description": "This is the data model for the Dotgo Platform to provide additional information regarding the HTTP request and response.",
+        "properties": {
+          "code": {
+            "type": "integer",
+            "description": "The reason code."
+          },
+          "text": {
+            "type": "string",
+            "description": "The text description of the given reason."
+          }
+        }
+      },
+      "RCSUserMessageType": {
+        "description": "This defines different RCS message types which can be sent from user to chatbot. Richcards and suggestions are not supported for user messages.",
+        "type": "object",
+        "oneOf": [
+          {
+            "properties": {
+              "suggestedResponse": {
+                "$ref": "#/components/schemas/Response"
+              }
+            },
+            "required": [
+              "suggestedResponse"
+            ]
+          },
+          {
+            "oneOf": [
+              {
+                "properties": {
+                  "textMessage": {
+                    "type": "string",
+                    "description": "This is a normal RCS text based Chat message.",
+                    "example": {
+                      "textMessage": "hello world"
+                    }
+                  }
+                },
+                "required": [
+                  "textMessage"
+                ]
+              },
+              {
+                "properties": {
+                  "fileMessage": {
+                    "$ref": "#/components/schemas/FileMessage"
+                  }
+                },
+                "required": [
+                  "fileMessage"
+                ]
+              },
+              {
+                "properties": {
+                  "audioMessage": {
+                    "$ref": "#/components/schemas/AudioMessage"
+                  }
+                },
+                "required": [
+                  "audioMessage"
+                ]
+              },
+              {
+                "properties": {
+                  "geolocationPushMessage": {
+                    "$ref": "#/components/schemas/GeolocationPushMessage"
+                  }
+                },
+                "required": [
+                  "geolocationPushMessage"
+                ]
+              }
+            ]
+          },
+          {
+            "properties": {
+              "sharedData": {
+                "$ref": "#/components/schemas/sharedData"
+              }
+            },
+            "required": [
+              "sharedData"
+            ]
+          },
+          {
+            "properties": {
+              "isTyping": {
+                "type": "string",
+                "description": "The isTyping notification to be sent to the user for the given Chat, or the isTyping notification received from the user for the given Chat. If sending the isTyping notification to the user, the value can be set to 'active' or 'idle'. The default active-state refresh interval is 120 seconds, and the default idle time-out interval is 15 seconds. In another word, if there is no another 'active' notification is sent by the bot within 15 seconds, the platform will send the 'idle' notification to the user.",
+                "enum": [
+                  "active",
+                  "idle"
+                ]
+              }
+            },
+            "required": [
+              "isTyping"
+            ]
+          }
+        ]
+      },
+      "WebhookPayload": {
+        "description": "This is the callback payload the Chatbot will received from the Chatbot Platform.",
+        "type": "object",
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "properties": {
+                  "RCSMessage": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/components/schemas/RCSMessageBase"
+                      },
+                      {
+                        "$ref": "#/components/schemas/RCSUserMessageType"
+                      }
+                    ]
+                  }
+                },
+                "required": [
+                  "RCSMessage"
+                ]
+              },
+              {
+                "properties": {
+                  "messageContact": {
+                    "$ref": "#/components/schemas/MessageContact"
+                  }
+                },
+                "required": [
+                  "messageContact"
+                ]
+              },
+              {
+                "properties": {
+                  "reason": {
+                    "$ref": "#/components/schemas/Reason"
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "properties": {
+              "event": {
+                "type": "string",
+                "description": "event type of the callback. 'message' - message (text, file, audio, geolocation, etc) from user; 'isTyping' - isTyping indication from user; 'messageStatus' - message status updates, including deliver/display notification and other message status updates; 'response' - response choosen from suggested chiplist by the user.",
+                "enum": [
+                  "message",
+                  "isTyping",
+                  "messageStatus",
+                  "response"
+                ]
+              }
+            },
+            "required": [
+              "event"
+            ]
+          }
+        ]
+      }
+    }
+  }
+}

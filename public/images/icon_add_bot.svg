@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="25px" height="24px" viewBox="0 0 25 24" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <!-- Generator: Sketch 57.1 (83088) - https://sketch.com -->
+    <title>Group 8</title>
+    <desc>Created with Sketch.</desc>
+    <defs>
+        <polygon id="path-1" points="0.15856 0.03344 23.48384 0.03344 23.48384 23.358832 0.15856 23.358832"></polygon>
+    </defs>
+    <g id="Page-1" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g id="Profile---Developer" transform="translate(-718.000000, -781.000000)">
+            <g id="Group-19" transform="translate(678.000000, 781.000000)">
+                <g id="Group-8" transform="translate(40.640000, 0.126560)">
+                    <mask id="mask-2" fill="white">
+                        <use xlink:href="#path-1"></use>
+                    </mask>
+                    <g id="Clip-7"></g>
+                    <path d="M23.48384,11.696112 C23.48384,18.137232 18.26224,23.358832 11.82112,23.358832 C5.38016,23.358832 0.15856,18.137232 0.15856,11.696112 C0.15856,5.254992 5.38016,0.033392 11.82112,0.033392 C18.26224,0.033392 23.48384,5.254992 23.48384,11.696112" id="Fill-6" fill="#FF0000" mask="url(#mask-2)"></path>
+                    <polygon id="Fill-9" fill="#FFFFFF" mask="url(#mask-2)" points="13.390544 17.985952 10.227184 17.985952 10.227184 13.314592 5.531344 13.314592 5.531344 10.102272 10.227184 10.102272 10.227184 5.406272 13.390544 5.406272 13.390544 10.102272 18.111024 10.102272 18.111024 13.314592 13.390544 13.314592"></polygon>
+                </g>
+            </g>
+        </g>
+    </g>
+</svg>

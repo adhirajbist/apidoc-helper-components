@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="1440px" height="400px" viewBox="0 0 1440 400" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <!-- Generator: Sketch 57.1 (83088) - https://sketch.com -->
+    <title>carousel-bg</title>
+    <desc>Created with Sketch.</desc>
+    <defs>
+        <linearGradient x1="0%" y1="46.1419753%" x2="100%" y2="53.8580247%" id="linearGradient-1">
+            <stop stop-color="#00A4FF" offset="0%"></stop>
+            <stop stop-color="#4E1719" offset="100%"></stop>
+        </linearGradient>
+        <linearGradient x1="0%" y1="26.5223276%" x2="100%" y2="73.4776724%" id="linearGradient-2">
+            <stop stop-color="#FFDF01" offset="0%"></stop>
+            <stop stop-color="#D81F26" offset="100%"></stop>
+        </linearGradient>
+        <linearGradient x1="0%" y1="35.0013661%" x2="100%" y2="64.9986339%" id="linearGradient-3">
+            <stop stop-color="#D81F26" offset="0%"></stop>
+            <stop stop-color="#FFDF01" offset="100%"></stop>
+        </linearGradient>
+        <linearGradient x1="0%" y1="22.4823028%" x2="100%" y2="77.5176972%" id="linearGradient-4">
+            <stop stop-color="#FFDF01" offset="0%"></stop>
+            <stop stop-color="#D81F26" offset="100%"></stop>
+        </linearGradient>
+        <linearGradient x1="0%" y1="12.9802934%" x2="100%" y2="87.0197066%" id="linearGradient-5">
+            <stop stop-color="#FFDF01" offset="0%"></stop>
+            <stop stop-color="#D81F26" offset="100%"></stop>
+        </linearGradient>
+    </defs>
+    <g id="Page-2" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g id="RCS-BOT-Directory---Home" transform="translate(0.000000, -180.000000)">
+            <g id="carousel-bg" transform="translate(0.000000, 180.000000)">
+                <rect id="Rectangle" fill="url(#linearGradient-1)" x="0" y="0" width="1440" height="400"></rect>
+                <path d="M1440,75.5898 L1440,399.9998 L895.57,399.9998 C884.95,385.4898 879.53,368.6108 888.31,339.4998 C909.9,267.9098 964.37,297.9998 1018.17,244.2098 C1071.96,190.4098 1053.439,171.8898 1107.23,118.0898 C1161.02,64.2998 1155.53,54.3598 1227.12,32.7798 C1298.71,11.1898 1303.72,15.9298 1369.9,39.7398 C1407.65,53.3298 1422.18,65.0398 1440,75.5898" id="Fill-1" fill="url(#linearGradient-2)" opacity="0.200000003"></path>
+                <path d="M730.3301,0 C707.9701,32.61 664.2601,46.64 638.9301,105.65 C602.0301,191.64 631.6401,204.35 594.7301,290.34 C569.0901,350.09 566.4801,372.6 543.1501,400 L0.0001,400 L0.0001,0 L730.3301,0 Z" id="Fill-3" fill="url(#linearGradient-3)" opacity="0.400000006"></path>
+                <path d="M300.1502,219.4292 C240.6802,247.7802 250.4502,268.2602 190.9802,296.6202 C131.5202,324.9702 133.1202,334.6792 68.4502,331.5992 C32.6902,329.8892 15.8602,327.5002 0.0002,319.1792 L0.0002,0.0002 L438.2702,0.0002 C432.9702,11.8402 428.2802,25.9802 425.8002,48.2902 C418.8902,110.3402 472.0202,127.0002 433.7002,179.2002 C395.3802,231.3892 359.6202,191.0702 300.1502,219.4292 Z" id="Fill-5" fill="url(#linearGradient-4)" opacity="0.5"></path>
+                <path d="M1440,111.4102 L1440,400.0002 L1094.61,400.0002 C1094.66,346.5302 1103.02,348.6102 1129.93,302.0002 C1156.92,255.2502 1174.24,265.2502 1201.23,218.5002 C1228.22,171.7502 1194.8,138.3302 1241.55,111.3402 C1288.3,84.3502 1300.54,130.0002 1354.52,130.0002 C1399.73,130.0002 1407.08,115.9702 1440,111.4102" id="Fill-7" fill="url(#linearGradient-5)" opacity="0.300000012"></path>
+            </g>
+        </g>
+    </g>
+</svg>

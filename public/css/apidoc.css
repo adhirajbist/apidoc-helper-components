@@ -1,0 +1,215 @@
+/*side nav*/
+
+.apidoc-sidenav{
+    width: 0;
+    height: 100vh;
+    position: fixed;
+    left: 0;
+    background-color: #F3F3F3;
+    overflow-y: auto;
+}
+
+.apidoc-sidenav-toggle{
+    position: fixed;
+    right: 20px;
+    top: 20px;
+    display: block;
+}
+
+@media only screen and (min-width: 1200px){
+    .apidoc-sidenav{
+        width: 300px !important;
+    }
+
+    .apidoc-sidenav-toggle{
+        display: none;
+    }
+}
+
+.apidoc-sidenav-searchbar-container{
+    width: 100%;
+    padding: 18px 10px;
+    color: gray;
+}
+
+.apidoc-sidenav-searchbar{
+    margin-left: 10px;
+    border: none;
+    background-color: #F3F3F3;
+    outline: none;
+}
+
+.apidoc-sidenav-bigtabs{
+    font-size: 20px;
+    font-size: bold;
+}
+
+.apidoc-sidenav a {
+    text-align: left;
+    display: block;
+    width: 100%;
+    padding: 18px 40px;
+    cursor: pointer;
+    text-decoration: none;
+    outline: none;
+    color: rgba(0, 0, 0, 0.815);
+
+}
+.apidoc-sidenav a:link{
+    text-decoration: none;
+}
+.apidoc-sidenav a:hover {
+    background-color: white;
+    color: rgba(0, 0, 0, 0.815);
+    text-decoration: none;
+}
+
+.apidoc-dropdown-active > i {
+    -webkit-transform: rotate(90deg);
+    -moz-transform: rotate(90deg);
+    -ms-transform: rotate(90deg);
+    -o-transform: rotate(90deg);
+    transform: rotate(90deg);
+}
+
+.apidoc-dropdown-container{
+    display: none;
+}
+
+.apidoc-dropdown-btn{
+    cursor: pointer;
+}
+
+.apidoc-dropdown-opts{
+    display: flex;
+    align-items: baseline;
+}
+
+.api-dropdown-pill{
+    min-width: 40px;
+    padding: 3px 0;
+    font-size: 8px;
+    text-transform: uppercase;
+    text-align: center;
+    border-radius: 2px;
+    color: white;
+    margin-right: 10px;
+}
+
+.api-dropdown-pill.ty-get{
+    background-color: #61AFFE;
+}
+
+.api-dropdown-pill.ty-put{
+    background-color: #FCA12F;
+}
+
+.api-dropdown-pill.ty-delete{
+    background-color: #FA3E3D;
+}
+
+.api-dropdown-pill.ty-post{
+    background-color: #4ACB90;
+}
+
+
+
+/*Right Panel*/
+
+.apidoc-rp-container{
+    width: 400px;
+}
+
+.apidoc-rp-path-container{
+    background-color: #11171a;
+    color: white;
+    padding: 10px 20px;
+    display: flex;
+    align-items: center;
+}
+
+.apidoc-rp-path{
+    flex-grow: 1;
+    margin-right: 5px;
+    max-width: 300px;
+    font-family: 'Courier New', monospace;
+    word-wrap: break-word;
+}
+
+.apidoc-rp-type{
+    text-transform: uppercase;
+    padding: 2px 10px;
+    margin-right: 5px;
+}
+
+.apidoc-rp-type.ty-get{
+    background-color: #61AFFE;
+}
+
+.apidoc-rp-type.ty-put{
+    background-color: #FCA12F;
+}
+
+.apidoc-rp-type.ty-delete{
+    background-color: #FA3E3D;
+}
+
+.apidoc-rp-type.ty-post{
+    background-color: #4ACB90;
+}
+
+.apidoc-rp-server{
+    background-color: white;
+    padding: 10px 10px;
+}
+
+.apidoc-rp-server-url{
+    border: 1px solid lightgray;
+    padding: 5px 5px;
+    overflow-x: auto;
+}
+
+.apidoc-rp-pill{
+    background-color: white;
+    width: 100px;
+    padding-top: 5px;
+    padding-bottom: 5px;
+    border: none;
+    outline: none;
+    cursor: default;
+    border-radius: 4px;
+    font-weight: bold;
+}
+
+.apidoc-rp-pill.res-pill{
+    color: #4ACB90;
+}
+
+.apidoc-rp-obj-container{
+    background-color: #11171a;
+    padding: 10px 20px 20px;
+    margin-top: 5px;
+}
+
+.apidoc-rp-contenttype-container{
+    color: white;
+    margin-bottom: 30px;
+}
+
+.apidoc-rp-contenttype{
+    background-color: #192226;
+    padding: 8px 8px;
+}
+
+.apidoc-rp-example{
+    overflow-x: auto;
+}
+
+ 
+/* body{
+    background-color: #263238 !important;
+}  */ 
+
+.check{
+    border:solid red 2px;
+}
